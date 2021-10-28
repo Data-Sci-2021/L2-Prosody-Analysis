@@ -14,3 +14,6 @@ Created the Github repo and uploaded the progress report and the plan docs. Set 
 
 ## 10-12-2021
 Updated project plan.
+
+## 10-28-2021
+Created wav folder where future audio files will be uploaded. Created a note that records data processing. 

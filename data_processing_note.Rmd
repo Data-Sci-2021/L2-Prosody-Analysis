@@ -1,0 +1,47 @@
+---
+title: "ELI speech corpus note"
+author: "Miroo Lee"
+date: "10/27/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(stringr)
+setwd("/Users/miroolee/ELI speech data/")
+dat <- read_csv("PELIC_speech_compiled.csv") 
+```
+
+
+Check the number of speakers by L1.
+The top three L1s are Arabic, Chinese, and Korean.
+```{r}
+table(dat$L1, dat$level_id)
+```
+
+## Find speakers who were enrolled over three semesters in each L1 group.
+1. add columns for level with 'n' as default value 
+```{r}
+dat <- as_tibble(dat)
+dat <- dat %>% add_column(level_2 = "n", level_3 = "n", level_4 = "n", level_5 = "n")
+```
+
+2. chang level_# value when there is a matching level
+```{r}
+dat$level_5[dat$level_id==5] <- "y"
+dat$level_4[dat$level_id==4] <- "y"
+dat$level_3[dat$level_id==3] <- "y"
+dat$level_2[dat$level_id==2] <- "y"
+```
+
+3. locate rows with level 3-5
+```{r}
+dat$level_3 =="y" & dat$level_4=="y" & dat$level_5=="y"
+threeSemesters <- dat$level_3 =="y" & dat$level_4=="y" & dat$level_5=="y"
+```
+
+4. use threeSemesters as an index to select participants
+```{r}
+yes<-dat[threeSemesters,]
+```
+

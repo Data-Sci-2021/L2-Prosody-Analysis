@@ -2,7 +2,7 @@
 title: "ELI speech corpus note"
 author: "Miroo Lee"
 date: "10/27/2021"
-output: html_notebook
+output: github_markdown
 ---
 
 ```{r setup, include=FALSE}
@@ -24,21 +24,23 @@ table(dat$L1, dat$level_id)
 ### Finding korean speakers who enrolled for level 3-5.
 Note that the results will show Korean speakers who were enrolled for level 3-5 or more. The output data may include files from level 2 if speakers were enrolled for 2,3,4,and 5. But all speakers will have minimum of 3,4,5 level data. 
 ```{r}
-kor.3levels <- dat %>%
+kor_3levels <- dat %>%
   filter (L1=="Korean" & level_id!="2") %>%
   distinct (anon_id, level_id) %>%
   count (anon_id) %>%
   filter (n==3) %>%
   inner_join (dat, by="anon_id")
-print(kor.3levels)
+print(kor_3levels)
 ```
 
 ### Finding the 2min monologues from Recorded Speech Activity (from Speaking classes) from level 3 and 5. What we are looking for is file_info_id 1. 
 ```{r}
-kor.dat <- kor.3levels %>%
+kor_dat <- kor_3levels %>%
   filter (level_id=="3"|level_id=="5") %>%
   filter (file_info_id=="1") 
 print(kor.dat)
+
+write.csv(kor_dat, 'korean_monologues_lv13.csv')
 ```
 
 

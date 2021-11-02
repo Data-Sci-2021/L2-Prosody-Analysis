@@ -2,7 +2,7 @@
 title: "ELI speech corpus note"
 author: "Miroo Lee"
 date: "10/27/2021"
-output: github_document
+output: html_notebook
 ---
 
 ```{r setup, include=FALSE}
@@ -15,33 +15,31 @@ dat <- read_csv("PELIC_speech_compiled.csv")
 
 Check the number of speakers by L1.
 The top three L1s are Arabic, Chinese, and Korean.
+The top three levels are 3,4, and 5.
 ```{r}
 table(dat$L1, dat$level_id)
 ```
 
-## Find speakers who were enrolled over three semesters in each L1 group.
-1. add columns for level with 'n' as default value 
+
+### Finding korean speakers who enrolled for level 3-5.
+Note that the results will show Korean speakers who were enrolled for level 3-5 or more. The output data may include files from level 2 if speakers were enrolled for 2,3,4,and 5. But all speakers will have minimum of 3,4,5 level data. 
 ```{r}
-dat <- as_tibble(dat)
-dat <- dat %>% add_column(level_2 = "n", level_3 = "n", level_4 = "n", level_5 = "n")
+kor.3levels <- dat %>%
+  filter (L1=="Korean" & level_id!="2") %>%
+  distinct (anon_id, level_id) %>%
+  count (anon_id) %>%
+  filter (n==3) %>%
+  inner_join (dat, by="anon_id")
+print(kor.3levels)
 ```
 
-2. chang level_# value when there is a matching level
+### Finding the 2min monologues from Recorded Speech Activity (from Speaking classes) from level 3 and 5. What we are looking for is file_info_id 1. 
 ```{r}
-dat$level_5[dat$level_id==5] <- "y"
-dat$level_4[dat$level_id==4] <- "y"
-dat$level_3[dat$level_id==3] <- "y"
-dat$level_2[dat$level_id==2] <- "y"
+kor.dat <- kor.3levels %>%
+  filter (level_id=="3"|level_id=="5") %>%
+  filter (file_info_id=="1") 
+print(kor.dat)
 ```
 
-3. locate rows with level 3-5
-```{r}
-dat$level_3 =="y" & dat$level_4=="y" & dat$level_5=="y"
-threeSemesters <- dat$level_3 =="y" & dat$level_4=="y" & dat$level_5=="y"
-```
 
-4. use threeSemesters as an index to select participants
-```{r}
-yes<-dat[threeSemesters,]
-```
-
+  

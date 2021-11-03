@@ -52,7 +52,6 @@ kor_txt <- kor_3levels %>%
   select(-ends_with("y"))
 
 write.csv(kor_txt, 'korean_monologues_lv13_transcriptions.csv')
-
 ```
 
 

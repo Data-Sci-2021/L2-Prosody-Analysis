@@ -29,7 +29,8 @@ kor_3levels <- dat %>%
   distinct (anon_id, level_id) %>%
   count (anon_id) %>%
   filter (n==3) %>%
-  inner_join (dat, by="anon_id")
+  inner_join (dat, by="anon_id") %>%
+  rename(row_id = 3)
 print(kor_3levels)
 ```
 
@@ -37,10 +38,21 @@ print(kor_3levels)
 ```{r}
 kor_dat <- kor_3levels %>%
   filter (level_id=="3"|level_id=="5") %>%
-  filter (file_info_id=="1") 
-print(kor.dat)
+  filter (file_info_id=="1") %>%
+print(kor_dat)
 
 write.csv(kor_dat, 'korean_monologues_lv13.csv')
+```
+
+### Finding the corresponding txt transcriptions for the audio files. 
+This actually created a dataframe with 33 variables
+```{r}
+kor_txt <- kor_3levels %>%
+  inner_join (kor_dat, by = c("row_id" = "corresponding_file")) %>%
+  select(-ends_with("y"))
+
+write.csv(kor_txt, 'korean_monologues_lv13_transcriptions.csv')
+
 ```
 
 

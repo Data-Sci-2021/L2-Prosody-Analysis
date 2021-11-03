@@ -1,4 +1,4 @@
-"","anon_id","n","...1","L1","gender","course_id","level_id","activity_type","file_info_id","file_type","source","corresponding_file","corresponding_family","text_len","text","tokens","tok_lem_POS"
+"","anon_id","n","row_id","L1","gender","course_id","level_id","activity_type","file_info_id","file_type","source","corresponding_file","corresponding_family","text_len","text","tokens","tok_lem_POS"
 "1","ac5",3,18683,"Korean","Male",235,3,"RSA",1,"wav","wav/RSA_3/18683_ac5.wav",18684,"[18684, 18683, 19250, 18719, 18720]",NA,NA,NA,NA
 "2","ac5",3,19866,"Korean","Male",235,3,"RSA",1,"wav","wav/RSA_3/19866_ac5.wav",19867,"[19867, 19866, 20329, 19882, 19898]",NA,NA,NA,NA
 "3","ac5",3,20977,"Korean","Male",235,3,"RSA",1,"wav","wav/RSA_3/20977_ac5.wav",20978,"[20978, 20977, 21179, 20988, 21499, 21003]",NA,NA,NA,NA

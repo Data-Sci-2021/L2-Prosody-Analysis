@@ -26,3 +26,7 @@ Completed data processing note on PELIC\_speech\_compiled.csv, illustrating the 
 
 Now the full speech data and corresponding transcripts are available.  
 Next step is to work with MFA.  
+
+## 11-4-2021
+
+Added [data_samples](data_samples) folder containing one wav file and one textgrid.

@@ -21,7 +21,7 @@ Created wav folder where future audio files will be uploaded. Created a note tha
 
 Completed data processing note on PELIC\_speech\_compiled.csv, illustrating the following steps I took to for this project.  
 1. Identify Korean speakers who enrolled minimum of 3-5 levels and their 2-minute monologues. Save the information as ['korean_monologues_lv13.csv'](korean_monologues_lv13.csv).  
-2. Add 2-minute monologue speech files of Korean speakers with 3-5 levels to L2-prosody-Analysis ['wav'](wav/) folder.  
+2. Add all the speech files from ['korean_monologues_lv13.csv'](korean_monologues_lv13.csv) to ['wav'](wav/) folder.  
 3. Identify transcriptions for the corresponding audio files and save the information as ['korean_monologues_lv13_trnascription.csv'](korean_monologues_lv13_transcriptions.csv).
 
 Now the full speech data and corresponding transcripts are available.  

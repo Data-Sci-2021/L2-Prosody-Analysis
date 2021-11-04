@@ -25,6 +25,6 @@ Completed data processing note on PELIC\_speech\_compiled.csv, illustrating the 
 3. add the identified files' information as [korean_monologues_lv13.csv](korean_monologues_lv13.csv).  
 4. add corresponding wav files to L2-prosody-Analysis wav folder.  
 5. identify transcriptions for the corresponding audio files.  
-6. add the identified transcription information as korean\_monologues\_lv13\_trnascription.csv.
+6. add the identified transcription information as [korean_monologues_lv13_trnascription.csv](korean_monologues_lv13_transcriptions.csv).
 
 Now the full speech data are available in wav folder.

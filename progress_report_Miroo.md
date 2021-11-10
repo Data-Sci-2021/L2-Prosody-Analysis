@@ -34,3 +34,7 @@ Added [data_samples](data_samples) folder containing one wav file and one textgr
 ## 11-8-2021
 
 Tried MFA but was not able to generate textgrids. 
+
+## 11-9-2021
+
+Added annotated wav and textgrids to data_samples.

@@ -30,3 +30,7 @@ Next step is to work with MFA.
 ## 11-4-2021
 
 Added [data_samples](data_samples) folder containing one wav file and one textgrid.
+
+## 11-8-2021
+
+Tried MFA but was not able to generate textgrids. 

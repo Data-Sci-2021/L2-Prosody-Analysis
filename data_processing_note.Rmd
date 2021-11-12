@@ -8,8 +8,19 @@ output: github_markdown
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(stringr)
-setwd("/Users/miroolee/ELI speech data/")
-dat <- read_csv("PELIC_speech_compiled.csv") 
+library(readr)
+library(ggplot2)
+setwd("/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/data_samples/")
+
+```
+## 1. Working with PELIC_speech_compiled.csv
+```{r}
+fDir <- "/Users/miroolee/ELI speech data/PELIC_speech_compiled.csv"
+paste0(tgDir, "/filename.textgrid")
+dat <- read_csv(fDir) 
+
+#setwd("/Users/miroolee/ELI speech data/") Don't use setwd twice. Use the above method. 
+#dat <- read_csv("PELIC_speech_compiled.csv") 
 ```
 
 
@@ -21,7 +32,7 @@ table(dat$L1, dat$level_id)
 ```
 
 
-### Finding korean speakers who enrolled for level 3-5.
+### 1.1 Finding korean speakers who enrolled for level 3-5.
 Note that the results will show Korean speakers who were enrolled for level 3-5 or more. The output data may include files from level 2 if speakers were enrolled for 2,3,4,and 5. But all speakers will have minimum of 3,4,5 level data. 
 ```{r}
 kor_3levels <- dat %>%
@@ -34,7 +45,7 @@ kor_3levels <- dat %>%
 print(kor_3levels)
 ```
 
-### Finding the 2min monologues from Recorded Speech Activity (from Speaking classes) from level 3 and 5. What we are looking for is file_info_id 1. 
+### 1.2 Finding the 2min monologues from Recorded Speech Activity (from Speaking classes) from level 3 and 5. What we are looking for is file_info_id 1. 
 ```{r}
 kor_dat <- kor_3levels %>%
   filter (level_id=="3"|level_id=="5") %>%
@@ -44,7 +55,7 @@ print(kor_dat)
 write.csv(kor_dat, 'korean_monologues_lv13.csv')
 ```
 
-### Finding the corresponding txt transcriptions for the audio files. 
+### 1.3 Finding the corresponding txt transcriptions for the audio files. 
 This actually created a dataframe with 33 variables
 ```{r}
 kor_txt <- kor_3levels %>%
@@ -54,5 +65,147 @@ kor_txt <- kor_3levels %>%
 write.csv(kor_txt, 'korean_monologues_lv13_transcriptions.csv')
 ```
 
+## 2. Working with TextGrids
+### Reading textgrids - didn't work
+```{r}
+library(readtextgrid)
+dir()
+tg <- example_textgrid()
+tg1 <- "data_samples/6391_hb4.TextGrid"
+tg2 <- "/Users/miroolee/Documents/DataScience/6391_hb4.TextGrid"
 
-  
+read_textgrid(path=tg)
+read_textgrid(path=tg1)
+read_textgrid(path=tg2)
+
+read_lines() #creates character vector
+
+paths <- list.files(
+  path = /Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/data_samples/,
+  pattern = "TextGrid$",
+  full.names = TRUE,
+  recursive = TRUE
+)
+```
+### 2.1 Using Praat script
+Alternatively, you can use a praat script "export_from_three_tiers.praat".  
+Preparing textgrid for Praat script:  
+1. Make sure you have four tiers (1:phrase, 2:word, 3:syllable, 4:segment)  
+2. Make sure you marked pause level(none:less than 0.15, S:0.15~1sec, M:1-2s, L:above 2s) at level4 tier.  
+(I should probably update my Praat script so that it would mark pauses automatically. I will try to update my script later.)  
+
+The result file is saved as duration_results.txt in the same folder as input wav and textgrids. You can find an example of duration_results.txt in the data_samples folder.  
+
+## 3. Process the praat output
+### 3.1 Figure out which encoding we need using guess_encoding function form readr package.
+```{r}
+guess_encoding("data_samples/duration_results.txt")
+dat <- read_tsv("data_samples/duration_results.txt", locale=locale(encoding="UTF-16"))
+
+```
+### 3.2 Adding level information from PELIC csv to praat output 
+```{r}
+lev <- read.csv("korean_monologues_lv13.csv")
+
+lev1<-lev %>%
+  unite(Filename, c("row_id", "anon_id")) %>%
+  select (c(Filename, gender, level_id))
+
+dat1 <- dat %>%
+  left_join(lev1, dat, by="Filename")
+```
+
+### 3.3 Add syllable label and word label information from the previous wordList.csv document.
+The wordList.csv document contains syllable structure and stress information of words in the wav files. This information was hancoded by me and therefore needs to be updated continuously as you add more wav files with new words. Obviously this is not optimal, and I hope to replace this document with some sort of dictionary later that contains syllable structure and stress information. 
+
+
+```{r}
+wdDat <- read.csv("wordList.csv")
+
+dat2 <- dat1 %>%
+  left_join(wdDat, by =c("SyllLabel" = "SyllLabel", "WordLabel" = "WordLabel"))
+
+new_wdDat <- dat2 %>%
+  filter(Filename=="21819_ea4"|Filename=="23027_ea4"|Filename=="24473_ea4") %>%
+  distinct(WordLabel,SyllLabel, .keep_all=TRUE) #I think I can also use anti_join() but oh well.
+
+write.csv(newWd, 'new_wordList.csv')
+```
+
+Next step is to work on new_wordList.csv that does not have values in SyllCV, primary and secondary stress. 
+This is the part that needs handcoding (until I figure out how to replace it with dictionary). For now, I will work with dat2. 
+
+### 3.4 Add [SyllOrder] with three levels: (wd) initial,medial, final information for each syllable. Also add [stress] 
+There's an issue in the PrimaryStress coding. Now if syllable 1,2,3 are stressed (ex:USA), PrimaryStress value shows as 123. This would be shown as 'unstressed' in stress column. Not sure how to fix it for now. 
+There aren't many of these though. 
+```{r}
+ dat3<-dat2 %>%
+  select(-c(PitchMaxInPhone,...13)) %>%
+  separate(SyllLabel, into = c("currentSyll", "entireSyll", sep ="_" )) %>%
+  add_column(SyllOrder = "medial") %>%
+  mutate (SyllOrder = case_when(
+  currentSyll == "1" ~ "initial",
+  currentSyll == entireSyll ~ "final",
+  currentSyll < entireSyll ~ "medial")) %>%
+  mutate (stress = case_when(
+    currentSyll == PrimaryStress ~ "stressed",
+    currentSyll != PrimaryStress ~ "unstressed"))
+```
+
+### 3.5 Add [normedPhoneDur]. This will be used specifically for VOT to account for speech rate. 
+```{r}
+dat4 <- dat3 %>%
+  mutate(normedPhoneDur = PhoneDuration/SyllDuration )
+```
+### 3.6 Add [IniBndLevel] and [FinBndLevel]
+```{r}
+dat5 <- dat4 %>%
+  mutate(IniBndLevel = case_when(
+    PrecedingPhone == "L" ~ "IP_initial",
+    PrecedingPhone == "M" ~ "ip_initial",
+    PrecedingPhone == "S" ~ "wd_initial",
+    TRUE ~ "wd_medial"
+  )) %>%
+  mutate(FinBndLevel = case_when(
+    FollowingPhone == "L" ~ "IP_final",
+    FollowingPhone == "M" ~ "ip_final",
+    FollowingPhone == "S" ~ "wd_final",
+    TRUE ~ "wd_medial"
+  ))
+
+```
+
+### 3.7 Remove numbers from [PrecedingPhone].[PhoneLabel].[FollowingPhone]
+***unfortunately, this doesn't work due to tokens such as '1_t_vot'(has two _) or FP (has no _).
+But for now, I am just going to use t,k,p for VOT. 
+```{r}
+dat6 <- dat5 %>%
+  separate(PrecedingPhone, into = c("num1", "PrecedingSeg", sep ="_" )) %>%
+  separate(PhoneLabel, into = c("num2", "SegLabel", sep ="_" )) %>%
+  separate(FollowingPhone, into = c("num3", "FollowingSeg", sep ="_" )) %>%
+  select(-c(num1,num2,num3))
+
+
+
+```
+
+### 4. Statistics
+### 
+```{r}
+vot <- dat6 %>% 
+  filter(SyllCV==c("CV","CVC","CVCC")) %>%
+  filter(SegLabel==c("t","p","k"))
+```
+
+```{r}
+v <- dat6 %>% 
+  filter(SyllCV==c("CV","CVC","CVCC")) %>%
+  filter(SegLabel=="V")
+```
+
+### 5. Visualization
+### 5.1. Domain initial strengthening
+```{r}
+ggplot(v,aes(IniBndLevel,PhoneDuration)+boxplot()
+
+```

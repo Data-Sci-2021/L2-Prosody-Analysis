@@ -13,7 +13,7 @@ library(ggplot2)
 setwd("/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/data_samples/")
 
 ```
-## 1. Working with PELIC_speech_compiled.csv
+## Part 1. Processing PELIC_speech_compiled.csv
 ```{r}
 fDir <- "/Users/miroolee/ELI speech data/PELIC_speech_compiled.csv"
 paste0(tgDir, "/filename.textgrid")
@@ -65,8 +65,8 @@ kor_txt <- kor_3levels %>%
 write.csv(kor_txt, 'korean_monologues_lv13_transcriptions.csv')
 ```
 
-## 2. Working with TextGrids
-### Reading textgrids - didn't work
+## Part 2. Read textgrids 
+### 2.1. Using readtextgrid package: do not use this section. This did not work. 
 ```{r}
 library(readtextgrid)
 dir()
@@ -87,7 +87,7 @@ paths <- list.files(
   recursive = TRUE
 )
 ```
-### 2.1 Using Praat script
+### 2.2 Using Praat script
 Alternatively, you can use a praat script "export_from_three_tiers.praat".  
 Preparing textgrid for Praat script:  
 1. Make sure you have four tiers (1:phrase, 2:word, 3:syllable, 4:segment)  
@@ -96,7 +96,7 @@ Preparing textgrid for Praat script:
 
 The result file is saved as duration_results.txt in the same folder as input wav and textgrids. You can find an example of duration_results.txt in the data_samples folder.  
 
-## 3. Process the praat output
+## Part 3. Clean the praat output
 ### 3.1 Figure out which encoding we need using guess_encoding function form readr package.
 ```{r}
 guess_encoding("data_samples/duration_results.txt")
@@ -129,7 +129,7 @@ new_wdDat <- dat2 %>%
   filter(Filename=="21819_ea4"|Filename=="23027_ea4"|Filename=="24473_ea4") %>%
   distinct(WordLabel,SyllLabel, .keep_all=TRUE) #I think I can also use anti_join() but oh well.
 
-write.csv(newWd, 'new_wordList.csv')
+write.csv(new_wdDat, 'new_wordList.csv')
 ```
 
 Next step is to work on new_wordList.csv that does not have values in SyllCV, primary and secondary stress. 
@@ -171,7 +171,7 @@ dat4 <- dat3 %>%
 
 ### 3.7 Add [DIS] and create firstSyll data
 ```{r}
-firstSyllDat <- dat5 %>%
+firstSyll_dat <- dat5 %>%
   group_by(WordLabel,SyllDuration) %>%
   filter(currentSyll==1)%>%
   mutate(DIS = case_when(
@@ -185,7 +185,7 @@ firstSyllDat <- dat5 %>%
 
 ### 3.8 Add [DFL] and create finSyll data
 ```{r}
-finSyllDat <- dat5 %>%
+finSyll_dat <- dat5 %>%
   group_by(WordLabel,SyllDuration) %>%
   filter(currentSyll == entireSyll) %>%
   mutate(DFL = case_when(
@@ -197,30 +197,61 @@ finSyllDat <- dat5 %>%
 ```
 
 
-### 4. Statistics
+## 4. Statistics
 ### Domain initial strenthening - use <firstSyllDat> data to examine domain initial pause effects
+### 4.1. Filter out the syllable structures that we will examine
 ```{r}
-firstSyllDat %>% 
-  filter(SyllCV==c("CV","CVC","CVCC"))
+target <- c("CVC","CVCC","CV")
+
+firstSyll_dat1 <- firstSyll_dat %>% 
+  filter(SyllCV %in% target) %>%
+   drop_na(level_id)
+```
+
+### 4.2. Prepare data for DIS on vot
+```{r}
+vot <- c("t_vot","k_vot","p_vot")
+
+vot_dat_DIS <- firstSyll_dat1 %>% 
+  filter(PhoneLabel %in% vot)
 
 ```
 
+### 4.3. Prepare data for DIS on vowel
 ```{r}
-v <- dat6 %>% 
-  filter(SyllCV==c("CV","CVC","CVCC")) %>%
-  filter(SegLabel=="V")
+vowel <- c("V")
+
+vowel_dat_DIS <- firstSyll_dat1 %>% 
+  filter(PhoneLabel %in% vowel)
 ```
 
+### 4.4. building models
 ```{r}
-v %>% 
-  count(IniBndLevel)
-```
 
+
+
+
+```
 
 ### 5. Visualization
 ### 5.1. Domain initial strengthening
-```{r}
-ggplot()+
-  geom_point(data=v, aes(IniBndLevel,PhoneDuration))
 
+```{r}
+ggplot(vot_dat_DIS,
+       aes(as.factor(DIS),normedPhoneDur, color=as.factor(level_id))) + stat_summary(fun.data=mean_cl_boot)+ xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("DIS effects on VOT")+facet_wrap(~PrimaryStress) #+ ylim (0,0.4)
+```
+```{r}
+ggplot(vot_dat_DIS,
+       aes(as.factor(DIS),PhoneDuration, color=as.factor(level_id))) + stat_summary(fun.data=mean_cl_boot)+ xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("DIS effects on VOT")+facet_wrap(~PrimaryStress) #+ ylim (0,0.4)
+```
+
+
+
+
+```{r}
+ggplot(vowel_dat_DIS,
+       aes(as.factor(DIS),normedPhoneDur, color=as.factor(level_id))) + stat_summary(fun.data=mean_cl_boot)+ xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("DIS effects on vowel")+facet_wrap(~PrimaryStress) #+ ylim (0,0.4)
 ```

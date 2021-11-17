@@ -36,7 +36,7 @@ Tried MFA, but the program threw errors and did not generate textgrids.
 ## 11-9-2021
 
 Added all the annotated wav and textgrids so far to [data_samples](data_samples).  
-Uploaded praat script 
+Uploaded praat script that reads annotated intervals from three tiers from a textgrid. 
 
 ## 2nd progress report  
 

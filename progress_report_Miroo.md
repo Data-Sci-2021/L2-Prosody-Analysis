@@ -23,7 +23,7 @@ Created wav folder where future audio files will be uploaded. Created a note tha
 - Documented the process to identify Korean speakers' monologue speech files from PELIC\_speech\_compiled.csv. You can find the relevant codes on "Part 1. Processing PELIC_speech_compiled.csv". The following steps were involved:    
   1. Identified Korean speakers with minimum enrollment of 3-5 levels (KS_lv13) and their 2-minute monologues; this was saved as ['korean_monologues_lv13.csv'](korean_monologues_lv13.csv).  
   2. Based on ['korean_monologues_lv13.csv'](korean_monologues_lv13.csv), hand-moved all the corresponding speech files to ['wav'](wav/) folder.   
-  3. Identified the transcriptions for KS_lv13 speech files. Saved the transcriptions as ['korean_monologues_lv13_trnascription.csv'](korean_monologues_lv13_transcriptions.csv). The future plan is to use these transcriptions for Montreal Forced Aligner to generate TextGrids. 
+  3. Based on ['korean_monologues_lv13.csv'](korean_monologues_lv13.csv), identified the transcriptions for KS_lv13 speech files. Saved the transcriptions as ['korean_monologues_lv13_trnascription.csv'](korean_monologues_lv13_transcriptions.csv). The future plan is to use these transcriptions for Montreal Forced Aligner to generate TextGrids. 
 
 ## 11-4-2021
 

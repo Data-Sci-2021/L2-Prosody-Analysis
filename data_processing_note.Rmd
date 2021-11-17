@@ -157,44 +157,52 @@ There aren't many of these though.
 dat4 <- dat3 %>%
   mutate(normedPhoneDur = PhoneDuration/SyllDuration )
 ```
-### 3.6 Add [IniBndLevel] and [FinBndLevel]
+
+### 3.6 Remove numbers from [PrecedingPhone].[PhoneLabel].[FollowingPhone]
+
 ```{r}
-dat5 <- dat4 %>%
-  mutate(IniBndLevel = case_when(
-    PrecedingPhone == "L" ~ "IP_initial",
-    PrecedingPhone == "M" ~ "ip_initial",
-    PrecedingPhone == "S" ~ "wd_initial",
-    TRUE ~ "wd_medial"
-  )) %>%
-  mutate(FinBndLevel = case_when(
-    FollowingPhone == "L" ~ "IP_final",
-    FollowingPhone == "M" ~ "ip_final",
-    FollowingPhone == "S" ~ "wd_final",
-    TRUE ~ "wd_medial"
-  ))
+ dat5 <- dat4 %>% 
+  mutate_at("PrecedingPhone", str_replace, "[12345]_", "") %>%
+  mutate_at("PhoneLabel", str_replace, "[12345]_", "") %>%
+  mutate_at("FollowingPhone", str_replace, "[12345]_", "")
+```
+
+
+
+### 3.7 Add [DIS] and create firstSyll data
+```{r}
+firstSyllDat <- dat5 %>%
+  group_by(WordLabel,SyllDuration) %>%
+  filter(currentSyll==1)%>%
+  mutate(DIS = case_when(
+    PrecedingPhone == "L" ~ "3",
+    PrecedingPhone == "M" ~ "2",
+    PrecedingPhone == "S" ~ "1")) %>%
+  fill(DIS, .direction="down") %>%
+  replace_na(list(DIS = 0))
 
 ```
 
-### 3.7 Remove numbers from [PrecedingPhone].[PhoneLabel].[FollowingPhone]
-***unfortunately, this doesn't work due to tokens such as '1_t_vot'(has two _) or FP (has no _).
-But for now, I am just going to use t,k,p for VOT. 
+### 3.8 Add [DFL] and create finSyll data
 ```{r}
-dat6 <- dat5 %>%
-  separate(PrecedingPhone, into = c("num1", "PrecedingSeg", sep ="_" )) %>%
-  separate(PhoneLabel, into = c("num2", "SegLabel", sep ="_" )) %>%
-  separate(FollowingPhone, into = c("num3", "FollowingSeg", sep ="_" )) %>%
-  select(-c(num1,num2,num3))
-
-
-
+finSyllDat <- dat5 %>%
+  group_by(WordLabel,SyllDuration) %>%
+  filter(currentSyll == entireSyll) %>%
+  mutate(DFL = case_when(
+    FollowingPhone == "L" ~ "3",
+    FollowingPhone == "M" ~ "2",
+    FollowingPhone == "S" ~ "1")) %>%
+  fill(DFL, .direction="up") %>%
+   replace_na(list(DFL = 0))
 ```
+
 
 ### 4. Statistics
-### 
+### Domain initial strenthening - use <firstSyllDat> data to examine domain initial pause effects
 ```{r}
-vot <- dat6 %>% 
-  filter(SyllCV==c("CV","CVC","CVCC")) %>%
-  filter(SegLabel==c("t","p","k"))
+firstSyllDat %>% 
+  filter(SyllCV==c("CV","CVC","CVCC"))
+
 ```
 
 ```{r}
@@ -203,9 +211,16 @@ v <- dat6 %>%
   filter(SegLabel=="V")
 ```
 
+```{r}
+v %>% 
+  count(IniBndLevel)
+```
+
+
 ### 5. Visualization
 ### 5.1. Domain initial strengthening
 ```{r}
-ggplot(v,aes(IniBndLevel,PhoneDuration)+boxplot()
+ggplot()+
+  geom_point(data=v, aes(IniBndLevel,PhoneDuration))
 
 ```

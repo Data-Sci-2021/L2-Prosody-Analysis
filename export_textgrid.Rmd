@@ -1,0 +1,31 @@
+---
+title: "export_textgrid"
+author: "Miroo Lee"
+date: "11/9/2021"
+output: html_document
+---
+# Exporting data from TextGrids
+### Reading textgrids - didn't work
+```{r setup, include=FALSE}
+library(readtextgrid)
+setwd("/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/data_samples/")
+tg <- example_textgrid()
+tg1 <- "/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/data_samples/6391_hb4.TextGrid"
+tg2 <- "/Users/miroolee/Documents/DataScience/6391_hb4.TextGrid"
+
+read_textgrid(path=tg)
+read_textgrid(path=tg1)
+read_textgrid(path=tg2)
+
+paths <- list.files(
+  path = /Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/data_samples/,
+  pattern = "TextGrid$",
+  full.names = TRUE,
+  recursive = TRUE
+)
+```
+
+Alternatively, you can use a praat script "export_from_three_tiers.praat".  
+Preparing textgrid for Praat script:  
+1. Make sure you have four tiers (1:phrase, 2:word, 3:syllable, 4:segment)  
+2. Make sure you marked pause level(none:less than 0.15, S:0.15~1sec, M:1-2s, L:above 2s) at level4 tier.  

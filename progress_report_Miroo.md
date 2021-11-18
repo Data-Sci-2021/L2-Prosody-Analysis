@@ -54,6 +54,8 @@ Updated ['data_processing_note.Rmd'](data_processing_note.Rmd) for the following
   7. Add [DIS] and create firstSyll data.  
   8. Add [DFL] and create finSyll data.  
   
+[wordList.csv](wordList.csv)* file is handcoded. This file contains primary and secondary stress information as well as syllable structure (ex. CV, CCV) based on CMU word bank. I am hoping to automate this process using CMU word bank dictionary in future, so that lexical stress and syllable structure of words are available for all the words without handcoding them.  
+
 - Started statistical analysis in 'Part 4. Statistical Analysis'. Separate analysis were made for Domain Initial Strengthening (DIS) and Domain Final Lengthening (DFL).   
 
 - All monologue speech files for Korean speakers with three semesters are made available in [wav](wav) folder. A portion of them annotated with textgrids and shared in [data_samples](data_samples) folder.  

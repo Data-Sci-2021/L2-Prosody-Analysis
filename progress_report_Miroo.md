@@ -56,7 +56,7 @@ Updated ['data_processing_note.Rmd'](data_processing_note.Rmd) for the following
   
 [wordList.csv](wordList.csv)* is a handcoded csv file that contains list of words from textgrid files with the information of 1) syllable structure (CV, CVV, CVC, etc.) and 2) presence of lexical stress on each syllable in each word. The stress information is based on the CMU Pronouncing Dictionary (http://www.speech.cs.cmu.edu/cgi-bin/cmudict). I am hoping to generate a complete word list from CMU dictionary through computational method in future.    
 
-- All monologue speech files for Korean speakers with three semesters are made available in [wav](wav) folder. A portion of them annotated with textgrids and shared in [data_samples](data_samples) folder.  
+- All monologue speech files of Korean speakers with three semesters are made available in the [wav](wav) folder. A portion of the speech files are annotated in textgrids mantually. These files are shared in [data_samples](data_samples) folder.  
 
 
 ## 3rd progress report  

@@ -36,8 +36,29 @@ Tried MFA, but the program threw errors and did not generate textgrids.
 ## 11-9-2021
 
 Added all the annotated wav and textgrids so far to [data_samples](data_samples).  
-Uploaded praat script that reads annotated intervals from three tiers from a textgrid. 
+Uploaded praat script [export_from_three_tiers.praat](export_from_three_tiers.praat) that reads annotated intervals from three tiers from a textgrid.  
 
 ## 2nd progress report  
+
+Updated ['data_processing_note.Rmd'](data_processing_note.Rmd) for the following parts.  
+
+- Documented the process of reading textgrids into a csv file in 'Part 2. Read textgrids'. The process requires a praat script [export_from_three_tiers.praat](export_from_three_tiers.praat).  
+
+- Documented the process of cleaning the praat script output in 'Part 3. Clean the praat output'. The process involves the following steps.
+  1. Figure out which encoding we need using guess_encoding function form readr package.  
+  2. Adding proficiency level information from PELIC csv to praat output.   
+  3. Add syllable label and word label information from the previous [wordList.csv](wordList.csv)* document.
+  4. Add [SyllOrder] (wd initial,,medial,final) for each syllable. Add [stress] (stressed/unstressed).  
+  5. Add [normedPhoneDur] which will be used specifically for VOT to account for speech rate.  
+  6. Remove numbers from [PrecedingPhone], [PhoneLabel], [FollowingPhone].  
+  7. Add [DIS] and create firstSyll data.  
+  8. Add [DFL] and create finSyll data.  
+  
+- Started statistical analysis in 'Part 4. Statistical Analysis'. Separate analysis were made for Domain Initial Strengthening (DIS) and Domain Final Lengthening (DFL).   
+
+- All monologue speech files for Korean speakers with three semesters are made available in [wav](wav) folder. A portion of them annotated with textgrids and shared in [data_samples](data_samples) folder.  
+
+
+
 
 

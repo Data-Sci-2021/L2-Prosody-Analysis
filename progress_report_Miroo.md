@@ -14,7 +14,7 @@ Updated project plan.
 
 ## 10-28-2021
 
-Created wav folder where future audio files will be uploaded. Created a note that records data processing on PELIC\_speech\_compiled.csv which is a compilation of the PELIC speech data. Currently, the PELIC speech corpus nor PELIC speech compiled.csv is available publicly. But a portion of the corpus and the corresponding part of PELIC speech compiled.csv are made public in this repository under the permission of the PELIC data mining group. 
+Created wav folder where future audio files will be uploaded. Created a note that records data processing on PELIC\_speech\_compiled.csv which is a compilation of the PELIC speech data. Currently, the PELIC speech corpus nor PELIC speech compiled.csv is NOT available publicly online. For now, a portion of the corpus and the corresponding part of PELIC speech compiled.csv are made public in this repository under the permission of the PELIC data mining group. 
 
 ## 1st progress report
 
@@ -51,8 +51,8 @@ Updated ['data_processing_note.Rmd'](data_processing_note.Rmd) for the following
   4. Add [SyllOrder] (wd initial,,medial,final) for each syllable. Add [stress] (stressed/unstressed).  
   5. Add [normedPhoneDur] which will be used specifically for VOT to account for speech rate.  
   6. Remove numbers from [PrecedingPhone], [PhoneLabel], [FollowingPhone].  
-  7. Add [DIS] and create firstSyll data.  
-  8. Add [DFL] and create finSyll data.  
+  7. Add [DIS] and create first syllable only data (firstSyll_data).  
+  8. Add [DFL] and create final syllable only data (finSyll_data).  
   
 [wordList.csv](wordList.csv)* is a handcoded csv file that contains list of words from textgrid files with the information of 1) syllable structure (CV, CVV, CVC, etc.) and 2) presence of lexical stress on each syllable in each word. The stress information is based on the CMU Pronouncing Dictionary (http://www.speech.cs.cmu.edu/cgi-bin/cmudict). I am hoping to generate a complete word list from CMU dictionary through computational method in future.    
 

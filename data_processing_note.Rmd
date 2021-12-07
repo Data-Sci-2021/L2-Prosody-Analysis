@@ -2,7 +2,10 @@
 title: "ELI speech corpus note"
 author: "Miroo Lee"
 date: "10/27/2021"
-output: html_markdown
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -12,35 +15,41 @@ library(readr)
 library(ggplot2)
 library(lme4)
 library(lmerTest)
-#setwd("/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/data_samples/")
 
 ```
-## Part 1. Processing PELIC_speech_compiled.csv
+## Data processing for the analysis  
+There are several parts in the data prepping for the analysis of the L2 prosodic boundary effects.  
+First, _identify which files are relevant for the analysis from the entire PELIC speech corpus_.  
+Second, _extract annotated acoustic information from Praat textgrid files_.   
+Third, _clean the praat output by specifying all syllables for 'before' and 'after' pause degrees (DIS and DFL)_.  
+
+## Part 1. Find speech files
 Part 1 describes identifying specific audio and text file information from PELIC_speech_compiled.csv. PELIC_speech_compiled.csv is from a private PELIC speech dataset, which is not publicly available yet. You can contact Na-Rae Han(naraehan@pitt.edu) to inquire the access to the data.  
 
-The output of the Part 1 include two files:  
-1. 'korean_monologues_lv13.csv'  -> list of wav files
-2. 'korean_monologues_lv13_transcriptions.csv'  -> list of txt transcriptions of wav files
-```{r}
-fDir <- "/Users/miroolee/ELI speech data/PELIC_speech_compiled.csv"
-#paste0(tgDir, "/filename.textgrid")
-dat <- read_csv(fDir) 
+The output of the Part 1 are the following:  
+**1. 'korean_monologues_lv13.csv': list of wav files**  
+**2. 'korean_monologues_lv13_transcriptions.csv': list of txt transcriptions of wav files**  
 
-#setwd("/Users/miroolee/ELI speech data/") Don't use setwd twice. Use the above method. 
-#dat <- read_csv("PELIC_speech_compiled.csv") 
+### 1.1 Read in the index file
+```{r echo=TRUE, warning=FALSE}
+#fDir <- "/Users/miroolee/ELI speech data"
+#paste0(fDir, "/PELIC_speech_compiled.csv")
+#dat <- read_csv(fDir) 
+setwd("/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/")
+dat <- read_csv("PELIC_speech_compiled.csv") 
 ```
 
 
-Check the number of speakers by L1.
-The top three L1s are Arabic, Chinese, and Korean.
-The top three levels are 3,4, and 5.
+Check the number of speakers by L1.  
+The top three L1s are Arabic, Chinese, and Korean.  
+The top three levels are 3,4, and 5.  
 ```{r}
 table(dat$L1, dat$level_id)
 ```
 
 
-### 1.1 Finding korean speakers who enrolled for level 3-5.
-Note that the results will show Korean speakers who were enrolled for level 3-5 or more. The output data may include files from level 2 if speakers were enrolled for 2,3,4,and 5. But all speakers will have minimum of 3,4,5 level data. 
+### 1.2 Filter by L1 and level
+In this analysis, I am looking for speech files of Korean speakers who were enrolled for three semesters(level 3 to 5). The code below will show Korean speakers who were enrolled for level 3-5 or more. The output data may include files from level 2 if speakers were enrolled for 2,3,4,and 5. But all speakers will have minimum of 3,4,5 level data. 
 ```{r}
 kor_3levels <- dat %>%
   filter (L1=="Korean" & level_id!="2") %>%
@@ -49,68 +58,74 @@ kor_3levels <- dat %>%
   filter (n==3) %>%
   inner_join (dat, by="anon_id") %>%
   rename(row_id = 3)
-print(kor_3levels)
 ```
 
-### 1.2 Finding the 2min monologues from Recorded Speech Activity (from Speaking classes) from level 3 and 5. What we are looking for is file_info_id 1. 
+### 1.3 Filter by task type  
+For this analysis, I am looking for speech files of two-minute monologues, which were made as part of the Recorded Speech Activity from Speaking classes. I specifically want to look for files from level 3 and 5. What we are looking for is file_info_id 1. The detailed file_info_id can be found in PELIC_speech_corpus github repository which is private for the moment.   
 ```{r}
 kor_dat <- kor_3levels %>%
   filter (level_id=="3"|level_id=="5") %>%
-  filter (file_info_id=="1") %>%
+  filter (file_info_id=="1") 
 print(kor_dat)
 
 write.csv(kor_dat, 'korean_monologues_lv13.csv')
 ```
 
-### 1.3 Finding the corresponding txt transcriptions for the audio files. 
-This actually created a dataframe with 33 variables
+### 1.4 Find corresponding txt transcripts  
+This actually created a dataframe with 33 variables. For this analysis, I did not make use of these text files as I annotated all speech files manually. But in future, these txt files will probably come in handy when we have to analyze more files, as we would not have to transcribe the files from sctrach. Note that the text files are transcribed by the students and therefore contain errors.  
 ```{r}
 kor_txt <- kor_3levels %>%
   inner_join (kor_dat, by = c("row_id" = "corresponding_file")) %>%
   select(-ends_with("y"))
-
+print(kor_txt)
 write.csv(kor_txt, 'korean_monologues_lv13_transcriptions.csv')
 ```
 
 ## Part 2. Read textgrids 
-### 2.1. Using readtextgrid package: do not use this section. This did not work. 
+For this process, I attempted to use readtextgrid packages, which I could not get to work. I instead used Praat script that I've made.
+
+### 2.1. readtextgrid package;failed :<
 ```{r}
-library(readtextgrid)
-dir()
-tg <- example_textgrid()
-tg1 <- "data_samples/6391_hb4.TextGrid"
-tg2 <- "/Users/miroolee/Documents/DataScience/6391_hb4.TextGrid"
+#library(readtextgrid)
+#dir()
+#tg <- example_textgrid()
+#tg1 <- "data_samples/6391_hb4.TextGrid"
+#tg2 <- "/Users/miroolee/Documents/DataScience/6391_hb4.TextGrid"
 
-read_textgrid(path=tg)
-read_textgrid(path=tg1)
-read_textgrid(path=tg2)
+#read_textgrid(path=tg)
+#read_textgrid(path=tg1)
+#read_textgrid(path=tg2)
 
-read_lines() #creates character vector
+#read_lines() #creates character vector
 
-paths <- list.files(
-  path = /Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/data_samples/,
-  pattern = "TextGrid$",
-  full.names = TRUE,
-  recursive = TRUE
-)
+#paths <- list.files(
+#  path = /Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/data_samples/,
+#  pattern = "TextGrid$",
+#  full.names = TRUE,
+#  recursive = TRUE
+#)
 ```
-### 2.2 Using Praat script
-Alternatively, you can use a praat script "export_from_three_tiers.praat".  
+### 2.2 Praat script
+I alternatively used a praat script, which can be found as "export_from_three_tiers.praat" in my git repository.    
 Preparing textgrid for Praat script:  
 1. Make sure you have four tiers (1:phrase, 2:word, 3:syllable, 4:segment)  
 2. Make sure you marked pause level(none:less than 0.15, S:0.15~1sec, M:1-2s, L:above 2s) at level4 tier.  
-(I should probably update my Praat script so that it would mark pauses automatically. I will try to update my script later.)  
+(I should probably update my Praat script so that it would mark pauses automatically. I will try to update my script later.)   
 
 The result file is saved as duration_results.txt in the same folder as input wav and textgrids. You can find an example of duration_results.txt in the data_samples folder.  
 
-## Part 3. Clean the praat output
-### 3.1 Figure out which encoding we need using guess_encoding function form readr package.
+## Part 3. Clean the praat output  
+There are several information I need for analyzing boundary effects. 
+
+### 3.1 Determine the encoding  
+For this, use a very handy guess_encoding function form readr package.  
 ```{r}
 guess_encoding("data_samples/duration_results.txt")
 dat <- read_tsv("data_samples/duration_results.txt", locale=locale(encoding="UTF-16"))
 
 ```
-### 3.2 Add proficiency level information from PELIC csv to praat output 
+### 3.2 Add proficiency level
+For this, I unite some parts from the previous PELIC output (1.3) to praat output 
 ```{r}
 lev <- read.csv("korean_monologues_lv13.csv")
 
@@ -122,10 +137,10 @@ dat1 <- dat %>%
   left_join(lev1, dat, by="Filename")
 ```
 
-### 3.3 Add syllable label and word label information from the previous wordList.csv document.
-The wordList.csv document contains syllable structure and stress information of words in the wav files. This information was handcoded by me and therefore needs to be updated continuously as you add more wav files with new words. Obviously this is not optimal, and I hope to replace this document with some sort of dictionary later that contains syllable structure and stress information. 
+### 3.3 Add list of words and their lexical stress info  
+For this part, I made a separate document containing syllable structure and lexical stress information of all the words in the wav files ['wordList.csv'](wordList.csv) which can be found in my github repository. This information was handcoded by me, and therefore needs to be updated continuously as you add more wav files with new words. Obviously this is not optimal, and I hope to replace this document with some sort of dictionary later that contains syllable structure and stress information. 
 
-
+Here I have three newly annotated wav files. I am combining the new words to my previous 'wordList.csv' file. 
 ```{r}
 wdDat <- read.csv("wordList.csv")
 
@@ -141,10 +156,18 @@ write.csv(new_wdDat, 'new_wordList.csv')
 
 Next step is to work on new_wordList.csv that does not have values in SyllCV, primary and secondary stress. 
 This is the part that needs handcoding (until I figure out how to replace it with dictionary). For now, I will work with dat2. 
+```{r}
+## Figure out how to automate this process!
+```
 
-### 3.4 Add [SyllOrder] with three levels: (wd) initial,medial, final information for each syllable. Also add [stress] 
+### 3.4 Specify syllables' positions in words and mark if stressed
+For this, I am adding two new variables:  
+__[SyllOrder]__ has with 3 levels: (wd) initial, medial and final.   
+__[stress]__ has 2 levels: stressed, unstressed.   
+
 There's an issue in the PrimaryStress coding. Now if syllable 1,2,3 are stressed (ex:USA), PrimaryStress value shows as 123. This would be shown as 'unstressed' in stress column. Not sure how to fix it for now. 
-There aren't many of these though. 
+There aren't many of these though.   
+
 ```{r}
  dat3<-dat2 %>%
   select(-c(PitchMaxInPhone,...13)) %>%
@@ -159,14 +182,16 @@ There aren't many of these though.
     currentSyll != PrimaryStress ~ "unstressed"))
 ```
 
-### 3.5 Add [normedPhoneDur]. will be used specifically for VOT to account for speech rate.  
+### 3.5 Normalize segment durations    
+For this, I am adding one new variable:
+__[normedPhoneDur]__ which is calculated by dividing raw duration by the syllable duration. This will be used specifically for voiceless stops VOT and voiceless fricatives to account for speech rate.  
 ```{r}
 dat4 <- dat3 %>%
   mutate(normedPhoneDur = PhoneDuration/SyllDuration )
 ```
 
-### 3.6 Remove numbers from [PrecedingPhone].[PhoneLabel].[FollowingPhone]
-
+### 3.6 Clean the phone labels     
+For this, I will remove numbers from [PrecedingPhone].[PhoneLabel].[FollowingPhone].  
 ```{r}
  dat5 <- dat4 %>% 
   mutate_at("PrecedingPhone", str_replace, "[12345]_", "") %>%
@@ -174,9 +199,10 @@ dat4 <- dat3 %>%
   mutate_at("FollowingPhone", str_replace, "[12345]_", "")
 ```
 
-
-
-### 3.7 Add [DIS] and create firstSyll data
+### 3.7 Specify word-initial syllable for preceding pause.
+Each **word-initial syllable** should have information on how much pause it has **before the syllable**.  
+For this, I am adding a new variable [DIS], short for _domain-initial-strenthening_.  
+This is where I also separate all the word-beignning syllables and save it as **'firstSyll_dat'**.  
 ```{r}
 firstSyll_dat <- dat5 %>%
   group_by(WordLabel,SyllDuration) %>%
@@ -188,10 +214,12 @@ firstSyll_dat <- dat5 %>%
   fill(DIS, .direction="down") %>%
   replace_na(list(DIS = 0)) %>%
   mutate(SyllCV=factor(SyllCV))
-
 ```
 
-### 3.8 Add [DFL] and create finSyll data
+### 3.8 Speficy word-final syllable for following pause.
+Each **word-final syllable** should have information on how much pause it has **after the syllable**.   
+For this, I am adding a new variable [DFL], short for _domain_final_lengthening_.    
+All the word-beignning syllables will be saved as a separate dataframe named **'finSyll_dat'**. 
 ```{r}
 finSyll_dat <- dat5 %>%
   group_by(WordLabel,SyllDuration) %>%
@@ -203,14 +231,11 @@ finSyll_dat <- dat5 %>%
   fill(DFL, .direction="up") %>%
    replace_na(list(DFL = 0)) %>%
     mutate(SyllCV=factor(SyllCV))
-
 ```
 
-
-## Part 4. Statistical Analysis 
-
+###
 ### 4.1. Separate CV syllable data 
-Here we test if vowel and consonant durations in CV syllable show linear relationships with pause durationa. 
+Word_initial and word_final datasets are separately analyzed.  
 ```{r}
 cv_dat_ini <- firstSyll_dat %>% 
   filter(SyllCV %in% c("CV")) %>%
@@ -221,6 +246,7 @@ cv_dat_ini <- firstSyll_dat %>%
     mutate(stress=fct_relevel(stress,c("unstressed","stressed"))) %>%
     mutate(level_id=factor(level_id))%>%
     mutate(level_id=fct_relevel(level_id,c("3","5")))%>%
+    mutate(Filename=factor(Filename)) %>%
     drop_na(level_id)
 
 cv_ini_V <- cv_dat_ini %>%
@@ -237,6 +263,7 @@ cv_dat_fin <- finSyll_dat %>%
     mutate(stress=fct_relevel(stress,c("unstressed","stressed"))) %>%
     mutate(level_id=factor(level_id))%>%
     mutate(level_id=fct_relevel(level_id,c("3","5")))%>%
+    mutate(Filename=factor(Filename)) %>%
     drop_na(level_id)
 
 cv_fin_V <- cv_dat_fin %>%
@@ -245,57 +272,63 @@ cv_fin_C <- cv_dat_fin %>%
   filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ"))
 ```
 
-### 4.2. building models for DIS on CV 
+## Part 4. Statistical Analysis 
+Here we test how __1.pause duration(0-3)__, __2.lexical stress(str vs unstr)__, __3.proficiency level(3 vs.5)__ affect the following segments' duration.
+
+### 4.2. Building models for boundary effects on word_initial syllable (#CV) 
 ```{r}
 lm1 = lmer(PhoneDuration~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_ini_V)
-summary(lm1)
 lm2 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_ini_C)
-summary(lm2)
 lm2.2 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename)+(1|PhoneLabel), data=cv_ini_C)
-summary(lm2.2)
-
-anova(lm2,lm2.2)
 ```
 
-### 4.3. building models for DFL on CV
+### 4.3. Adding interaction because I am interested in how proficiency level affects stress and boundary effects.
 ```{r}
-lm3 = lmer(PhoneDuration~DFL+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_fin_V)
-summary(lm3)
-lm4 = lmer(normedPhoneDur~DFL+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_fin_C)
-summary(lm4)
-lm4.2 = lmer(normedPhoneDur~DFL+stress+level_id+(1|WordLabel)+(1|Filename)+(1|PhoneLabel), data=cv_fin_C)
-summary(lm4.2)
-anova(lm4,lm4.2)
-
-## Adding interaction because I am interested in how proficiency level affects stress and boundary effects.
-lm5 = lmer(PhoneDuration~DFL*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_fin_V)
-summary(lm5)
-lm6 = lmer(normedPhoneDur~DFL*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_fin_C)
-summary(lm6)
+lm5 = lmer(PhoneDuration~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_ini_V)
+summary(lm5) #vowel in CV with interaction
 ```
 
-### 5. Visualization
-### 5.1. Domain initial strengthening
-```{r} 
-ggplot(cv_ini_V, aes(as.factor(DIS),normedPhoneDur, color=stress))+
+```{r}
+ggplot(cv_ini_V, aes(as.factor(DIS),PhoneDuration, color=stress))+
   geom_boxplot(outlier.shape=NA)+
   xlab('Boundary Degree 0<1<2<3')+
-  ggtitle("DIS effects on vowel in #CV")+
+  ggtitle("DIS effects on word_initial #CV vowel")+
   facet_wrap(~level_id,labeller=label_both)
 ```
 
 ```{r}
-ggplot(cv_ini_V,
+lm6 = lmer(normedPhoneDur~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_ini_C)
+summary(lm6) #consonant in CV with interaction
+```
+
+
+```{r}
+ggplot(cv_ini_C,
        aes(as.factor(DIS),PhoneDuration, color=stress))+
   geom_boxplot(outlier.shape=NA)+
  # stat_summary(fun.data=mean_cl_boot)+
   xlab('Boundary Degree 0<1<2<3')+
-  ggtitle("DIS effects on vowel in #CV")+
+  ggtitle("DIS effects on word_initial #CV vl consonant")+
   facet_wrap(~level_id,labeller=label_both)
 ```
 
+### 4.2.1 Domain initial strengthening
 
-### 6. Separate CVC syllable structure 
+### 4.3. Building models for boundary effects on word_final syllables 
+```{r}
+lm11 = lmer(PhoneDuration~DFL+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_fin_V)
+summary(lm11) #vowel in CV
+lm12 = lmer(normedPhoneDur~DFL+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_fin_C)
+summary(lm12) #consonant in CV
+lm12.2 = lmer(normedPhoneDur~DFL+stress+level_id+(1|WordLabel)+(1|Filename)+(1|PhoneLabel), data=cv_fin_C)
+
+lm13 = lmer(PhoneDuration~DFL*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_fin_V)
+summary(lm13) #vowel in CV
+lm14 = lmer(normedPhoneDur~DFL*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_fin_C)
+summary(lm14) #consonant in CV
+```
+
+### 5. Separate CVC syllable structure 
 Here we test if vowel and consonant durations in CVC syllable show linear relationships with pause durationa. 
 ```{r}
 cvc_dat_ini <- firstSyll_dat %>% 
@@ -330,11 +363,11 @@ cvc_fin_C <- cvc_dat_fin %>%
 ```
 
 ### 7.1 building models for DIS on CVC
-```{r}
-lm11 = lmer(PhoneDuration~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_V)
-summary(lm11)
-lm12 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_C)
-summary(lm12)
+```{r echo=TRUE}
+lm21 = lmer(PhoneDuration~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_V)
+summary(lm21)
+lm22 = lmer(normedPhoneDur~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_C)
+summary(lm22)
 ```
 
 
@@ -396,9 +429,3 @@ lm34 = lmer(normedPhoneDur~DFL+stress+level_id+(1|WordLabel)+(1|Filename)+(1|Syl
 summary(lm34)
 ```
 
-
-```{r}
-ggplot(vowel_dat_DIS,
-       aes(as.factor(DIS),normedPhoneDur, color=as.factor(level_id))) + stat_summary(fun.data=mean_cl_boot)+ xlab('Boundary Degree 0<1<2<3')+
-  ggtitle("DIS effects on vowel")+facet_wrap(~PrimaryStress) #+ ylim (0,0.4)
-```

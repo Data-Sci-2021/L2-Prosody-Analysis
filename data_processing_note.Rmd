@@ -15,13 +15,14 @@ library(readr)
 library(ggplot2)
 library(lme4)
 library(lmerTest)
-
 ```
 ## Data processing for the analysis  
 There are several parts in the data prepping for the analysis of the L2 prosodic boundary effects.  
 First, _identify which files are relevant for the analysis from the entire PELIC speech corpus_.  
 Second, _extract annotated acoustic information from Praat textgrid files_.   
 Third, _clean the praat output by specifying all syllables for 'before' and 'after' pause degrees (DIS and DFL)_.  
+
+----------------------------------
 
 ## Part 1. Find speech files
 Part 1 describes identifying specific audio and text file information from PELIC_speech_compiled.csv. PELIC_speech_compiled.csv is from a private PELIC speech dataset, which is not publicly available yet. You can contact Na-Rae Han(naraehan@pitt.edu) to inquire the access to the data.  
@@ -30,13 +31,13 @@ The output of the Part 1 are the following:
 **1. 'korean_monologues_lv13.csv': list of wav files**  
 **2. 'korean_monologues_lv13_transcriptions.csv': list of txt transcriptions of wav files**  
 
+----------------------------------  
+
 ### 1.1 Read in the index file
 ```{r echo=TRUE, warning=FALSE}
-#fDir <- "/Users/miroolee/ELI speech data"
-#paste0(fDir, "/PELIC_speech_compiled.csv")
-#dat <- read_csv(fDir) 
-setwd("/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/")
-dat <- read_csv("PELIC_speech_compiled.csv") 
+folder <- "/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis"
+dat_path <- paste(folder, "/PELIC_speech_compiled.csv", sep="")
+dat <- read_csv(dat_path) 
 ```
 
 
@@ -68,7 +69,7 @@ kor_dat <- kor_3levels %>%
   filter (file_info_id=="1") 
 print(kor_dat)
 
-write.csv(kor_dat, 'korean_monologues_lv13.csv')
+write.csv(kor_dat, 'KOR_mono.csv')
 ```
 
 ### 1.4 Find corresponding txt transcripts  
@@ -78,11 +79,15 @@ kor_txt <- kor_3levels %>%
   inner_join (kor_dat, by = c("row_id" = "corresponding_file")) %>%
   select(-ends_with("y"))
 print(kor_txt)
-write.csv(kor_txt, 'korean_monologues_lv13_transcriptions.csv')
+write.csv(kor_txt, 'KOR_mono_scripts.csv')
 ```
 
+----------------------------------    
+
 ## Part 2. Read textgrids 
-For this process, I attempted to use readtextgrid packages, which I could not get to work. I instead used Praat script that I've made.
+For this process, I attempted to use readtextgrid packages, which I could not get to work. I instead used Praat script that I've made.  
+
+----------------------------------   
 
 ### 2.1. readtextgrid package;failed :<
 ```{r}
@@ -114,20 +119,27 @@ Preparing textgrid for Praat script:
 
 The result file is saved as duration_results.txt in the same folder as input wav and textgrids. You can find an example of duration_results.txt in the data_samples folder.  
 
+----------------------------------  
+
 ## Part 3. Clean the praat output  
-There are several information I need for analyzing boundary effects. 
+There are several information I need for analyzing boundary effects.  
 
-### 3.1 Determine the encoding  
+----------------------------------   
+
+### 3.1 Determine the encoding   
 For this, use a very handy guess_encoding function form readr package.  
-```{r}
-guess_encoding("data_samples/duration_results.txt")
-dat <- read_tsv("data_samples/duration_results.txt", locale=locale(encoding="UTF-16"))
-
+```{r echo=TRUE, warning=FALSE}
+wav_folder <- "/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/wav_SAMPLES"
+dat_path <- paste(wav_folder, "/duration_results.txt", sep="")
+guess_encoding(dat_path)
+dat <- read_tsv(dat_path, locale=locale(encoding="UTF-16"))
 ```
-### 3.2 Add proficiency level
+### 3.2 Add proficiency level  
 For this, I unite some parts from the previous PELIC output (1.3) to praat output 
 ```{r}
-lev <- read.csv("korean_monologues_lv13.csv")
+folder <- "/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis"
+lev_path <- paste(folder, "/KOR_mono.csv", sep="")
+lev <- read.csv(lev_path)
 
 lev1<-lev %>%
   unite(Filename, c("row_id", "anon_id")) %>%
@@ -142,7 +154,8 @@ For this part, I made a separate document containing syllable structure and lexi
 
 Here I have three newly annotated wav files. I am combining the new words to my previous 'wordList.csv' file. 
 ```{r}
-wdDat <- read.csv("wordList.csv")
+wdDat_path <- paste(folder, "/wordList.csv", sep="")
+wdDat <- read.csv(wdDat_path)
 
 dat2 <- dat1 %>%
   left_join(wdDat, by =c("SyllLabel" = "SyllLabel", "WordLabel" = "WordLabel"))
@@ -155,12 +168,13 @@ write.csv(new_wdDat, 'new_wordList.csv')
 ```
 
 Next step is to work on new_wordList.csv that does not have values in SyllCV, primary and secondary stress. 
-This is the part that needs handcoding (until I figure out how to replace it with dictionary). For now, I will work with dat2. 
+This is the part that needs handcoding (until I figure out how to replace it with dictionary). For now, I will work with dat2.  
+
 ```{r}
 ## Figure out how to automate this process!
 ```
 
-### 3.4 Specify syllables' positions in words and mark if stressed
+### 3.4 Specify syllables' positions in words and mark if stressed    
 For this, I am adding two new variables:  
 __[SyllOrder]__ has with 3 levels: (wd) initial, medial and final.   
 __[stress]__ has 2 levels: stressed, unstressed.   
@@ -199,10 +213,17 @@ For this, I will remove numbers from [PrecedingPhone].[PhoneLabel].[FollowingPho
   mutate_at("FollowingPhone", str_replace, "[12345]_", "")
 ```
 
-### 3.7 Specify word-initial syllable for preceding pause.
-Each **word-initial syllable** should have information on how much pause it has **before the syllable**.  
-For this, I am adding a new variable [DIS], short for _domain-initial-strenthening_.  
-This is where I also separate all the word-beignning syllables and save it as **'firstSyll_dat'**.  
+----------------------------------   
+
+## Part 4. Get DIS and DFL datasets  
+In this process, I am going to separate **word-initial syllables** for the analysis of **DIS (Domain Initial Strengthening)** effect. Similarly, I am separating **word-final syllables** for the analysis of **DFL (Domain Fianl Lengthening)** effect.  
+
+Note that DIS is operationalized as preceding pause durations as a proxy measure for the strength of prosodic domain junctures. I assumes longer the pause is, higher the prosodic domain is. I expect stronger DIS for longer pause.  
+
+----------------------------------   
+
+### 4.1. Word-initial syllables for DIS  
+Here, I select **word-initial syllables**, and then assign preceding pause level for each word-initial syllable using a new variable [DIS]. All the word-initial syllables are saved as **'firstSyll_dat'**.
 ```{r}
 firstSyll_dat <- dat5 %>%
   group_by(WordLabel,SyllDuration) %>%
@@ -216,10 +237,8 @@ firstSyll_dat <- dat5 %>%
   mutate(SyllCV=factor(SyllCV))
 ```
 
-### 3.8 Speficy word-final syllable for following pause.
-Each **word-final syllable** should have information on how much pause it has **after the syllable**.   
-For this, I am adding a new variable [DFL], short for _domain_final_lengthening_.    
-All the word-beignning syllables will be saved as a separate dataframe named **'finSyll_dat'**. 
+### 4.2 Word-final syllables for DFL  
+Here, I select **word-final syllables** and assign following pause level for each word-final syllable using a new variable [DFL], short for _domain_final_lengthening_. All the word-beignning syllables are saved as a separate dataframe named **'finSyll_dat'**. 
 ```{r}
 finSyll_dat <- dat5 %>%
   group_by(WordLabel,SyllDuration) %>%
@@ -233,11 +252,31 @@ finSyll_dat <- dat5 %>%
     mutate(SyllCV=factor(SyllCV))
 ```
 
-###
-### 4.1. Separate CV syllable data 
-Word_initial and word_final datasets are separately analyzed.  
+----------------------------------   
+
+## Part 5. Subset by Syllable Structure and Segments   
+Here I make three subsets of dataset of different syllable structures: CV, CVC, and CV&CVC. Note that the main interests in this analysis is any durational changes in vowels and voiceless consonants as a function of stress, preceding/following pause, and proficiency level.  
+
+Because VOT durations are differentially enhanced depending on a voicing feature(shorter for voiced, longer for voiceless), I only look at voiceless consonants. For the similar reason, I only look at single consonant onset, rather than looking at tauto syllabic (ex: steam).   
+
+The highest number of syllable structure is CVC(1)
+
 ```{r}
-cv_dat_ini <- firstSyll_dat %>% 
+summary(firstSyll_dat$SyllCV)
+summary(finSyll_dat$SyllCV)
+```
+
+----------------------------------   
+
+### 5.1. Get CV syllable data  
+Word_initial and word_final datasets are separately analyzed. Four output datasets are made:  
+**cv_ini_V** : vowels in word_initial syllable CV    
+**cv_ini_C**: voiceless stops and fricatives in word_initial syllable CV  
+**cv_fin_V**: vowels in word_final syllable CV  
+**cv_fin_C**: voiceless stops and fricatives in word_final syllable CV
+
+```{r}
+cv_ini <- firstSyll_dat %>% 
   filter(SyllCV %in% c("CV")) %>%
     filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ","V")) %>%
     mutate(DIS=factor(DIS)) %>%
@@ -249,12 +288,12 @@ cv_dat_ini <- firstSyll_dat %>%
     mutate(Filename=factor(Filename)) %>%
     drop_na(level_id)
 
-cv_ini_V <- cv_dat_ini %>%
+cv_ini_V <- cv_ini %>%
   filter(PhoneLabel %in% c("V"))
-cv_ini_C <- cv_dat_ini %>%
+cv_ini_C <- cv_ini %>%
   filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ"))
 
-cv_dat_fin <- finSyll_dat %>% 
+cv_fin <- finSyll_dat %>% 
   filter(SyllCV %in% c("CV")) %>%
     filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ","V")) %>%
    mutate(DFL=factor(DFL)) %>%
@@ -266,70 +305,20 @@ cv_dat_fin <- finSyll_dat %>%
     mutate(Filename=factor(Filename)) %>%
     drop_na(level_id)
 
-cv_fin_V <- cv_dat_fin %>%
+cv_fin_V <- cv_fin %>%
   filter(PhoneLabel %in% c("V"))
-cv_fin_C <- cv_dat_fin %>%
+cv_fin_C <- cv_fin %>%
   filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ"))
 ```
+----------------------------------   
 
-## Part 4. Statistical Analysis 
-Here we test how __1.pause duration(0-3)__, __2.lexical stress(str vs unstr)__, __3.proficiency level(3 vs.5)__ affect the following segments' duration.
-
-### 4.2. Building models for boundary effects on word_initial syllable (#CV) 
-```{r}
-lm1 = lmer(PhoneDuration~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_ini_V)
-lm2 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_ini_C)
-lm2.2 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename)+(1|PhoneLabel), data=cv_ini_C)
-```
-
-### 4.3. Adding interaction because I am interested in how proficiency level affects stress and boundary effects.
-```{r}
-lm5 = lmer(PhoneDuration~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_ini_V)
-summary(lm5) #vowel in CV with interaction
-```
-
-```{r}
-ggplot(cv_ini_V, aes(as.factor(DIS),PhoneDuration, color=stress))+
-  geom_boxplot(outlier.shape=NA)+
-  xlab('Boundary Degree 0<1<2<3')+
-  ggtitle("DIS effects on word_initial #CV vowel")+
-  facet_wrap(~level_id,labeller=label_both)
-```
-
-```{r}
-lm6 = lmer(normedPhoneDur~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_ini_C)
-summary(lm6) #consonant in CV with interaction
-```
-
-
-```{r}
-ggplot(cv_ini_C,
-       aes(as.factor(DIS),PhoneDuration, color=stress))+
-  geom_boxplot(outlier.shape=NA)+
- # stat_summary(fun.data=mean_cl_boot)+
-  xlab('Boundary Degree 0<1<2<3')+
-  ggtitle("DIS effects on word_initial #CV vl consonant")+
-  facet_wrap(~level_id,labeller=label_both)
-```
-
-### 4.2.1 Domain initial strengthening
-
-### 4.3. Building models for boundary effects on word_final syllables 
-```{r}
-lm11 = lmer(PhoneDuration~DFL+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_fin_V)
-summary(lm11) #vowel in CV
-lm12 = lmer(normedPhoneDur~DFL+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_fin_C)
-summary(lm12) #consonant in CV
-lm12.2 = lmer(normedPhoneDur~DFL+stress+level_id+(1|WordLabel)+(1|Filename)+(1|PhoneLabel), data=cv_fin_C)
-
-lm13 = lmer(PhoneDuration~DFL*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_fin_V)
-summary(lm13) #vowel in CV
-lm14 = lmer(normedPhoneDur~DFL*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_fin_C)
-summary(lm14) #consonant in CV
-```
-
-### 5. Separate CVC syllable structure 
-Here we test if vowel and consonant durations in CVC syllable show linear relationships with pause durationa. 
+### 5.2. Get CVC syllable data  
+Word_initial and word_final datasets are separately analyzed. Four output datasets are made:  
+**cvc_ini_V** : vowels in word_initial syllable CVC    
+**cvc_ini_C**: voiceless stops and fricatives in word_initial syllable CVC  
+**cvc_fin_V**: vowels in word_final syllable CVC  
+**cvc_fin_C**: voiceless stops and fricatives in word_final syllable CVC  
+One problem with the analysis with this dataset is that unlike voiceless stop VOT, which were marked when they were in syllable onset only, voiceless fricatives are in both syllable onset and coda position. This can be problematic since the boundary effects is the strongest when the segment is right next to the boundary. Right now, my dataset does not control for such distance.  
 ```{r}
 cvc_dat_ini <- firstSyll_dat %>% 
   filter(SyllCV %in% c("CVC")) %>%
@@ -344,7 +333,7 @@ cvc_dat_ini <- firstSyll_dat %>%
 cvc_ini_V <- cvc_dat_ini %>%
   filter(PhoneLabel %in% c("V"))
 cvc_ini_C <- cvc_dat_ini %>%
-  filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ"))
+  filter(PhoneLabel %in% c("t_vot","k_vot","p_vot"))#,"f","s","ð","ʃ"))
 
 cvc_dat_fin <- finSyll_dat %>% 
   filter(SyllCV %in% c("CVC")) %>%
@@ -362,24 +351,248 @@ cvc_fin_C <- cvc_dat_fin %>%
   filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ"))
 ```
 
-### 7.1 building models for DIS on CVC
-```{r echo=TRUE}
-lm21 = lmer(PhoneDuration~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_V)
-summary(lm21)
-lm22 = lmer(normedPhoneDur~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_C)
-summary(lm22)
-```
+-----------------------------  
 
-
-### 7.2. building models for DFL on CVC
+### 5.3. Get CVC+CV syllable data  
+Word_initial and word_final datasets are separately analyzed. Four output datasets are made:  
+**both_ini_V** : vowels in word_initial syllable CVC+CV    
+**both_ini_C**: voiceless stops and fricatives in word_initial syllable CVC+CV  
+**both_fin_V**: vowels in word_final syllable CVC+CV  
+**both_fin_C**: voiceless stops and fricatives in word_final syllable CVC+CV   
 ```{r}
-lm13 = lmer(PhoneDuration~DFL+stress+level_id+(1|WordLabel)+(1|Filename), data=cvc_fin_V)
-summary(lm13)
-lm14 = lmer(normedPhoneDur~DFL+stress+level_id+(1|WordLabel)+(1|Filename), data=cvc_fin_C)
-summary(lm14)
+both_dat_ini <- firstSyll_dat %>% 
+  filter(SyllCV %in% c("CVC","CV")) %>%
+    filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ","V")) %>%
+    mutate(DIS=factor(DIS)) %>%
+    mutate(DIS=fct_relevel(DIS,c("0","1","2","3"))) %>%
+    mutate(stress=factor(stress))%>%
+    mutate(stress=fct_relevel(stress,c("unstressed","stressed"))) %>%
+    mutate(level_id=factor(level_id))%>%
+    drop_na(level_id)
+
+both_ini_V <- both_dat_ini %>%
+  filter(PhoneLabel %in% c("V"))
+both_ini_C <- both_dat_ini %>%
+  filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ"))
+
+both_dat_fin <- finSyll_dat %>% 
+  filter(SyllCV %in% c("CVC","CV")) %>%
+    filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ","V")) %>%
+   mutate(DFL=factor(DFL)) %>%
+    mutate(DFL=fct_relevel(DFL,c("0","1","2","3"))) %>%
+    mutate(stress=factor(stress))%>%
+    mutate(stress=fct_relevel(stress,c("unstressed","stressed"))) %>%
+    mutate(level_id=factor(level_id))%>%
+    drop_na(level_id)
+
+both_fin_V <- both_dat_fin %>%
+  filter(PhoneLabel %in% c("V"))
+both_fin_C <- both_dat_fin %>%
+  filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ"))
 ```
 
-### 8. All syllable structures
+-----------------------------  
+
+## Part 6. Statistical Analysis on DIS on CV
+Here we test how __1.pause duration(0-3)__, __2.lexical stress(str vs unstr)__, __3.proficiency level(3 vs.5)__ affect the following segments' duration. The dependent variable is **log([PhoneDuration])** for vowels and **[normedPhonDur]** for consonants.
+```{r}
+# models without interactions
+lm1 = lmer(log(PhoneDuration)~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_ini_V)
+lm2 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cv_ini_C)
+lm2.2 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename)+(1|PhoneLabel), data=cv_ini_C)
+anova(lm2,lm2.2)
+# The model that accounts for different phone types is better (lm2.2)
+```
+
+### w/o interaction; V in wd-initial CV   
+The following model of V in #CV without interactions (lm1) shows...   
+**- significant decrease** in V in #CV as the syllable follows a **longer pause**  
+**- signifciant increase** in V in #CV when the syllable is **stressed**
+```{r}
+summary(lm1)
+ggplot(cv_ini_V,
+       aes(as.factor(DIS),log(PhoneDuration), color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("V in word_initial #CV")
+```
+
+### w/o interaction; C in wd-initial CV  
+The model below of C in #CV without interactions (lm2.2) shows...  
+**- significant decrease** in C in #CV as the syllable follows a **longer pause**  
+**- no effect** on C in #CV when the syllable is **stressed**  
+```{r}
+summary(lm2.2)
+ggplot(cv_ini_C,
+       aes(as.factor(DIS),normedPhoneDur, color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("C in word_initial #CV")
+```
+
+-----------------------------  
+
+### w/ interaction; V in wd-initial CV
+For the analysis, I am interested in how proficiency level interact with stress and boundary effects. The model below of V in #CV with interactions (lm3) shows...  
+**- no effect** on V in #CV when the syllable follows a **longer pause***  
+**- significant increase** in V in #CV when the syllable is **stressed**
+```{r}
+lm3 = lmer(log(PhoneDuration)~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_ini_V)
+summary(lm3) #vowel in CV with interaction
+ggplot(cv_ini_V, aes(as.factor(DIS),log(PhoneDuration), color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("V in word_initial #CV")+
+  facet_wrap(~level_id,labeller=label_both)
+```
+
+### w/ interaction; C in wd-initial CV
+For the analysis, I am interested in how proficiency level interact with stress and boundary effects. The model below of C in #CV with interactions (lm4) shows...  
+**- significant increase** on C in #CV when the syllable is **stressed ** and follows a **longer pause**     
+**- significant decrease** in C in #CV in **level 5** when follows a **longer pause**  
+```{r}
+lm4 = lmer(normedPhoneDur~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cv_ini_C)
+summary(lm4) #consonant in CV with interaction
+ggplot(cv_ini_C,
+       aes(as.factor(DIS),normedPhoneDur, color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+ # stat_summary(fun.data=mean_cl_boot)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("C in word_initial #CV")+
+  facet_wrap(~level_id,labeller=label_both)
+```
+
+-----------------------------  
+
+## Part 7. Statistical Analysis on DIS on CVC
+Here we test how __1.pause duration(0-3)__, __2.lexical stress(str vs unstr)__, __3.proficiency level(3 vs.5)__ affect the following segments' duration. The dependent variable is **log([PhoneDuration])** for vowels and **[normedPhonDur]** for consonants.
+```{r}
+lm11 = lmer(log(PhoneDuration)~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_V)
+lm12 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_C)
+lm12.2 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename)+(1|PhoneLabel), data=cvc_ini_C)
+anova(lm12,lm12.2) # the models are not significantly different.
+```
+
+
+### w/o interaction; V in wd-initial CVC   
+The following model of V in #CV without interactions (lm11) shows...   
+**- no effect** in V in #CVC as the syllable follows a **longer pause**  
+**- signifciant increase** in V in #CVC when the syllable is **stressed**
+```{r}
+summary(lm11)
+ggplot(cvc_ini_V,
+       aes(as.factor(DIS),log(PhoneDuration), color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("V in word_initial #CVC")
+```
+### w/o interaction; C in wd-initial CVC   
+The following model of C in #CV without interactions (lm12.2) shows...   
+**- no effect** in C in #CVC as the syllable follows a **longer pause**  
+**- signifciant decrease** in C in #CVC when the syllable is **stressed**
+```{r}
+summary(lm12.2)
+ggplot(cvc_ini_C,
+       aes(as.factor(DIS),normedPhoneDur, color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("C in word_initial #CVC")
+```
+
+### w/ interaction; V in wd-initial CVC
+For the analysis, I am interested in how proficiency level interact with stress and boundary effects. The model below of V in #CVC with interactions (lm13) shows...  
+**- no effect** on V in #CVC when the syllable follows a **longer pause***  
+**- no effect** on V in #CVC when the syllable is **stressed**
+```{r}
+lm13 = lmer(log(PhoneDuration)~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_V)
+summary(lm13) #vowel in CVC
+ggplot(cvc_ini_V,
+       aes(as.factor(DIS),log(PhoneDuration), color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("V in word_initial #CVC")+
+  facet_wrap(~level_id,labeller=label_both)
+```
+
+#### w/ interaction C in wd-initial CVC  
+**- no significant effect** of stress.  
+**- no significant effect** of preceding pause.  
+```{r}
+lm14 = lmer(normedPhoneDur~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=cvc_ini_C)
+summary(lm14) #consonant in CVC
+ggplot(cvc_ini_C,
+       aes(as.factor(DIS),normedPhoneDur, color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("C in word_initial #CVC")+
+  facet_wrap(~level_id,labeller=label_both)
+```
+
+-----------------------------  
+
+## Part 8. Statistical Analysis on DIS on CVC+CV
+Here we test how __1.pause duration(0-3)__, __2.lexical stress(str vs unstr)__, __3.proficiency level(3 vs.5)__ affect the following segments' duration. The dependent variable is **log([PhoneDuration])** for vowels and **[normedPhonDur]** for consonants.
+```{r}
+lm21 = lmer(log(PhoneDuration)~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=both_ini_V)
+lm22 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename), data=both_ini_C)
+lm22.2 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename)+(1|PhoneLabel), data=both_ini_C)
+anova(lm22,lm22.2) # model that accounts for PhoneLabel is better
+```
+
+### w/o interaction;V in wd-initial CVC+CV
+```{r}
+summary(lm21)
+ggplot(both_ini_V,
+       aes(as.factor(DIS),log(PhoneDuration), color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("V in word_initial #CVC,#CV")
+```
+
+### w/o interaction;C in wd-initial CVC+CV
+```{r}
+summary(lm22.2)
+ggplot(both_ini_C,
+       aes(as.factor(DIS),normedPhoneDur, color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("V in word_initial #CVC,#CV")
+```
+### w/ interaction; V in wd-initial CVC+CV
+**- no effect** on V in #CVC,#CV when the syllable follows a **longer pause***  
+**- increase** of V in #CVC,#CV when the syllable is **stressed**
+**- no effect** of semester
+```{r}
+lm23 = lmer(log(PhoneDuration)~DIS*stress*level_id+(1|WordLabel)+(1|Filename)+(1|SyllCV), data=both_ini_V)
+summary(lm23) #vowel in CVC+CV
+ggplot(both_ini_V,
+       aes(as.factor(DIS),log(PhoneDuration), color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("V in word_initial #CVC,#CV")+
+  facet_wrap(~level_id,labeller=label_both)
+```
+
+
+### w/ interaction; C in wd-initial CVC+CV
+**- no effect** on C in #CVC when the syllable follows a **longer pause***  
+**- no effect** on C in #CVC when the syllable is **stressed**  
+**- marginal effect on C
+```{r}
+lm24 = lmer(normedPhoneDur~DIS*stress*level_id+(1|WordLabel)+(1|Filename)+(1|SyllCV), data=both_ini_C)
+summary(lm24) #consonant in CVC
+ggplot(both_ini_C,
+       aes(as.factor(DIS),normedPhoneDur, color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("C in word_initial #CVC,#CV")+
+  facet_wrap(~level_id,labeller=label_both)
+```
+
+
+
+
+### Part 9. Open syllable - this part is not analyzed at this time. 
 ```{r}
 all_dat_ini <- firstSyll_dat %>% 
     filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ","V")) %>%
@@ -411,21 +624,3 @@ all_fin_V <- all_dat_fin %>%
 all_fin_C <- all_dat_fin %>%
   filter(PhoneLabel %in% c("t_vot","k_vot","p_vot","f","s","ð","ʃ"))
 ```
-
-### 8.2 building models for DIS on all syllable structures
-```{r}
-lm31 = lmer(PhoneDuration~DIS+stress+level_id+(1|WordLabel)+(1|Filename)+(1|SyllCV), data=all_ini_V)
-summary(lm31)
-lm32 = lmer(normedPhoneDur~DIS+stress+level_id+(1|WordLabel)+(1|Filename)+(1|SyllCV), data=all_ini_C)
-summary(lm32)
-```
-
-
-### 8.3. building models for DFL on all syllable structures
-```{r}
-lm33 = lmer(PhoneDuration~DFL+stress+level_id+(1|WordLabel)+(1|Filename)+(1|SyllCV), data=all_fin_V)
-summary(lm33)
-lm34 = lmer(normedPhoneDur~DFL+stress+level_id+(1|WordLabel)+(1|Filename)+(1|SyllCV), data=all_fin_C)
-summary(lm34)
-```
-

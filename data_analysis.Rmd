@@ -3,9 +3,8 @@ title: "data_analysis"
 author: "Miroo Lee"
 date: "12/14/2021"
 output: 
-  html_document:
+  github_document:
     toc: true
-    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -15,6 +14,8 @@ library(readr)
 library(ggplot2)
 library(lme4)
 library(lmerTest)
+library(knitr)
+opts_chunk$set(fig.path="/Users/miroolee/Documents/DataScience/L2-Prosody-Analysis/plots")
 ```
 
 ## Part 1. Cleaning the praat output  
@@ -99,7 +100,7 @@ dat4 <- dat3 %>%
 ```
 
 ### 6. Clean the phone labels     
-Remove numbers from [PrecedingPhone].[PhoneLabel].[FollowingPhone].  
+Removed numbers from [PrecedingPhone].[PhoneLabel].[FollowingPhone].  
 ```{r}
  dat5 <- dat4 %>% 
   mutate_at("PrecedingPhone", str_replace, "[12345]_", "") %>%
@@ -108,12 +109,12 @@ Remove numbers from [PrecedingPhone].[PhoneLabel].[FollowingPhone].
 ```
 
 ### 7. Get word-initial syllables for DIS  
-In this process, I am going to separate **word-initial syllables** for the analysis of **DIS (Domain Initial Strengthening)** effect. Similarly, I am separating **word-final syllables** for the analysis of **DFL (Domain Fianl Lengthening)** effect.  
+In this process, I separated **word-initial syllables** for the analysis of **DIS (Domain Initial Strengthening)** effect. Similarly, I separated **word-final syllables** for the analysis of **DFL (Domain Fianl Lengthening)** effect.  
 
-Note that DIS is operationalized as preceding pause durations as a proxy measure for the strength of prosodic domain junctures. I assumes longer the pause is, higher the prosodic domain is. I expect stronger DIS for longer pause.  
+Note that DIS is operationalized as preceding pause duration as a proxy measure for the strength of prosodic domain junctures. I assumes longer the pause is, higher the prosodic domain is. I expect stronger DIS for longer pause.    
 
 
-Here, I select **word-initial syllables**, and then assign preceding pause level for each word-initial syllable using a new variable [DIS]. All the word-initial syllables are saved as **'firstSyll_dat'**.
+I selected **word-initial syllables**, and then assigned preceding pause level for each word-initial syllable using a new variable [DIS]. All the word-initial syllables were saved as **'firstSyll_dat'**.
 ```{r}
 firstSyll_dat <- dat5 %>%
   group_by(WordLabel,SyllDuration) %>%
@@ -128,7 +129,7 @@ firstSyll_dat <- dat5 %>%
 ```
 
 ### 8. Get word-final syllables for DFL  
-Here, I select **word-final syllables** and assign following pause level for each word-final syllable using a new variable [DFL], short for _domain_final_lengthening_. All the word-beignning syllables are saved as a separate dataframe named **'finSyll_dat'**. 
+I selected **word-final syllables** and assigned following pause level for each word-final syllable using a new variable [DFL], short for _domain_final_lengthening_. All the word-beignning syllables were saved as a separate dataframe named **'finSyll_dat'**. 
 ```{r}
 finSyll_dat <- dat5 %>%
   group_by(WordLabel,SyllDuration) %>%
@@ -145,7 +146,7 @@ finSyll_dat <- dat5 %>%
 ### 9. Get CVC+CV syllable data 
 I made a subset of dataset of with the two most frequent syllable structures, CV and CVC. Note that the main interests in this analysis is any durational changes in vowels and voiceless consonants as a function of stress, preceding/following pause, and proficiency level.  
 
-Because VOT durations are differentially enhanced depending on a voicing feature(shorter for voiced, longer for voiceless), I only look at voiceless consonants. For the similar reason, I only look at single consonant onset, rather than looking at tauto syllabic onset (ex: steam).   
+Because VOT durations are differentially enhanced depending on a voicing feature(shorter for voiced, longer for voiceless), I only looked at voiceless consonants. For the similar reason, I only looked at single consonant onset, rather than looking at syllable onset with double or more consonants (ex: steam).   
 
 ```{r}
 summary(firstSyll_dat$SyllCV)
@@ -153,7 +154,7 @@ summary(finSyll_dat$SyllCV)
 ```
 
 
-Word_initial and word_final datasets are separately analyzed. Four output datasets are made:  
+Word_initial and word_final datasets were separately analyzed. Four output datasets are made:  
 **both_ini_V** : vowels in word_initial syllable CVC+CV    
 **both_ini_C**: voiceless stops and fricatives in word_initial syllable CVC+CV  
 **both_fin_V**: vowels in word_final syllable CVC+CV  
@@ -221,7 +222,7 @@ ggplot(both_ini_C,
 -----------------------------  
 
 ### w/ interaction; V in wd-initial
-For the analysis, I am interested in how proficiency level interact with stress and boundary effects.   
+For the analysis, I am interested in how proficiency level interact with stress and boundary effects. Therefore, I included interactions between predictors in the model.     
 ```{r}
 lm3 = lmer(log(PhoneDuration)~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=both_ini_V)
 summary(lm3) # V was lengthened by stress.

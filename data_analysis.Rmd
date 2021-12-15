@@ -247,4 +247,16 @@ ggplot(both_ini_C,
   ggtitle("C at word_initial in 1st vs. 3rd semester")+
   facet_wrap(~level_id,labeller=label_both)
 ```
-
+### syllable duration
+```{r}
+lm6 = lmer(log(SyllDuration)~DIS*stress*level_id+(1|WordLabel)+(1|Filename), data=both_ini_C)
+lm7 = lmer(log(SyllDuration)~DIS*stress*level_id+(1|WordLabel)+(1|Filename)+(1|PhoneLabel), data=both_ini_C)
+summary(lm7)
+ggplot(both_ini_C,
+       aes(as.factor(DIS),log(SyllDuration), color=stress))+
+  geom_boxplot(outlier.shape=NA)+
+ # stat_summary(fun.data=mean_cl_boot)+
+  xlab('Boundary Degree 0<1<2<3')+
+  ggtitle("C at word_initial in 1st vs. 3rd semester")+
+  facet_wrap(~level_id,labeller=label_both)
+```

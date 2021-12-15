@@ -20,7 +20,7 @@ In the root folder:
 * [`.gitignore`](.gitignore) has git ignored file entries.  
 * [`project_plan.md`](project_plan.md) describes the initial plan for the project.  
 * [`project_progress.md`](project_progress.md) shows three progress reports throughout the semester.  
-* [`presentation.pdf`](presentation.pdf) is the slides of the presentation I gave at the end of the semester.   
+* [`presentation.pdf`](presentation.pdf) is the slides of the presentation I gave at the end of the semester. This presentation only included the preliminary data analysis. More detailed results are documented in [`final_report.md`](final_report.md)   
 * [`search_wav.Rmd`](search_wav.Rmd) contains codes for identifying wav file names by filtering L1, level, and task type.  
 * [`search_wav.md`](search_wav.md) same as the above but in md file.    
 * [`KOR_mono.csv`](KOR_mono.csv) is an output of [`search_wav.md`](search_wav.md). It is a list of two-minute monologue speech files of Korean speakers who were enrolled for three semesters.  

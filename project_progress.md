@@ -63,5 +63,10 @@ Updated ['data_processing_note.Rmd'](data_processing_note.Rmd) for the following
 
 - Started statistical analysis in 'Part 4. Statistical Analysis'. Separate analysis were made for Domain Initial Strengthening (DIS) and Domain Final Lengthening (DFL).   
 
+## 4th progress report (03-30-2022)  
 
+**1. Corrected range of prosodic gestures: from segement to syllable**  
+Previously, the focus of analysis of the pause effects was conducted per each segment. For example, each segment was examined for its preceding pause duration. This results in situations like 'pause_level_2 # CV' where the consonant C is marked as having a  preceding pause level 2 but V is marked as having a preceding pause level 1. This was changed so that both C and V in #CV will be marked as preceded by pause level 2. 
 
+**2. More annotation on the way**   
+Additional speech files by female students are being annotated. The annotated files are saved in separate google drive and need a review. Based on the word-level annotation, Wordlist is being updated.  
